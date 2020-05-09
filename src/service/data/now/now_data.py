@@ -14,11 +14,6 @@ import time;
 
 
 
-
-
-
-
-
 class NowData(object):
 
     #api
