@@ -9,14 +9,17 @@ import re
 # else:
 #    print("No match!!")
 
-url = 'http://money.163.com/special/pinglun/'
+url = 'http://q.10jqka.com.cn/gn/'
 
 result = []
 
 f = urllib.request.urlopen(url)
 
 content = f.read().decode('gbk')
-pattern = re.compile(r'<div class="list_item clearfix">.*?</span>',re.S)
+
+print(content)
+
+pattern = re.compile(r'<div class="cate_items">.*?</div>',re.S)
 basic_content = re.finditer(pattern,content)
 
 

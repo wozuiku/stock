@@ -23,6 +23,257 @@ class RuleUtil(object):
 
 
 
+    def rule_bigDown(self, rows_all, batch):
+
+
+        sqlUtil = SqlUtil()
+        rule_day_count = 10
+        rows_all_count = len(rows_all)
+        rows_target = rows_all[rows_all_count - rule_day_count: rows_all_count]
+        rows_target_count = len(rows_target)
+
+        index = 0
+        for row in rows_target:
+            print(row)
+            print(index)
+            index = index + 1
+
+
+        if rows_target_count > 9:
+
+            closes = []
+
+            for row in rows_all:
+                closes.append(float(row[3]))
+
+            close_max = max(closes)
+            close_min = min(closes)
+
+            print('close_max = ' + str(close_max))
+            print('close_min = ' + str(close_min))
+
+            close_targets = []
+
+            for row in rows_target:
+                close_targets.append(float(row[3]))
+
+            close_target_max = max(close_targets)
+            close_target_min = min(close_targets)
+
+            print('close_target_max = ' + str(close_target_max))
+            print('close_target_min = ' + str(close_target_min))
+
+
+            rateDown = 0
+
+            if close_max > 0:
+                rateDown = (close_max - close_min) / close_max
+
+            print('rateDown = ' + str(rateDown))
+
+            rateUp_target = 0
+            if rateDown > 0.5:
+
+
+                if close_target_min > 0:
+
+                    rateUp_target = (close_target_max - close_target_min) / close_target_min
+
+                print('rateUp_target = ' + str(rateUp_target))
+
+
+                if rateUp_target < 0.2:
+
+                    close = float(rows_all[rows_all_count - 1][3])
+                    high = float(rows_all[rows_all_count - 1][4])
+                    low = float(rows_all[rows_all_count - 1][5])
+                    open = float(rows_all[rows_all_count - 1][6])
+
+                    turn_over_rate = float(rows_all[rows_all_count - 1][10])
+
+                    rateUp_today = 0
+
+                    if open > 0:
+                        rateUp_today = (close - open) / open;
+
+                    print('rateUp_today = ' + str(rateUp_today))
+
+                    if close > open:
+
+
+                        if rateUp_today >= 0.05:
+                            remark = '累计跌幅超过50%，最近9天涨幅小于20%，今天涨幅超过5%'
+                            code = rows_all[rows_all_count - 1][1]
+                            name = rows_all[rows_all_count - 1][2]
+
+                            sqlUtil.insert_stock_select(batch, code, name, '1', remark)
+                            print(remark)
+                            print(code)
+                            print(name)
+
+                        # if turn_over_rate >= 3:
+                        #     remark = '累计跌幅超过50%，最近9天涨幅小于20%，今天换手率超过3%'
+                        #     code = rows_all[rows_all_count - 1][1]
+                        #     name = rows_all[rows_all_count - 1][2]
+                        #
+                        #     sqlUtil.insert_stock_select(batch, code, name, '4', remark)
+                        #     print(remark)
+                        #     print(code)
+                        #     print(name)
+
+
+
+
+
+
+
+    def rule_2Day10Up(self, rows_all, batch):
+
+        sqlUtil = SqlUtil()
+
+        rows_all_count = len(rows_all)
+
+        if rows_all_count > 3:
+
+            close_end = float(rows_all[rows_all_count - 1][3])
+            open_end = float(rows_all[rows_all_count - 1][6])
+
+            close_begin = float(rows_all[rows_all_count - 3][3])
+
+            upRate = 0
+
+            if close_begin > 0:
+                upRate = (close_end - close_begin) / close_begin;
+
+            if upRate >= 0.1:
+                if close_end > open_end:
+                    remark = '2天累计涨幅超过10%'
+                    code = rows_all[rows_all_count - 1][1]
+                    name = rows_all[rows_all_count - 1][2]
+
+                    sqlUtil.insert_stock_select(batch, code, name, '2', remark)
+
+
+
+    def rule_3Day15Up(self, rows_all, batch):
+
+        sqlUtil = SqlUtil()
+
+        rows_all_count = len(rows_all)
+
+        if rows_all_count > 4:
+
+            close_end = float(rows_all[rows_all_count - 1][3])
+            open_end = float(rows_all[rows_all_count - 1][6])
+
+            close_begin = float(rows_all[rows_all_count - 4][3])
+
+            upRate = 0
+
+            if close_begin > 0:
+                upRate = (close_end - close_begin) / close_begin;
+
+            if upRate >= 0.15:
+                if close_end > open_end:
+                    remark = '3天累计涨幅超过15%'
+                    code = rows_all[rows_all_count - 1][1]
+                    name = rows_all[rows_all_count - 1][2]
+
+                    sqlUtil.insert_stock_select(batch, code, name, '3', remark)
+
+
+
+    def rule_5Day30Up(self, rows_all, batch):
+
+
+        sqlUtil = SqlUtil()
+
+        rows_all_count = len(rows_all)
+
+        if rows_all_count > 6:
+
+            close_end = float(rows_all[rows_all_count - 1][3])
+
+            close_begin = float(rows_all[rows_all_count - 6][3])
+
+            upRate = 0
+
+            if close_begin > 0:
+                upRate = (close_end - close_begin) / close_begin;
+
+            if upRate >= 0.32:
+                remark = '5天累计涨幅超过30%'
+                code = rows_all[rows_all_count - 1][1]
+                name = rows_all[rows_all_count - 1][2]
+
+                sqlUtil.insert_stock_select(batch, code, name, '4', remark)
+
+
+
+
+    def rule_30Day50Up(self, rows_all, batch):
+
+        sqlUtil = SqlUtil()
+
+        rows_all_count = len(rows_all)
+
+        if rows_all_count > 30:
+
+            close_end = float(rows_all[rows_all_count - 1][3])
+
+            close_begin = float(rows_all[rows_all_count - 30][3])
+
+            upRate = 0
+
+            if close_begin > 0:
+                upRate = (close_end - close_begin) / close_begin;
+
+            if upRate >= 0.5:
+                remark = '30天累计涨幅超过50%'
+                code = rows_all[rows_all_count - 1][1]
+                name = rows_all[rows_all_count - 1][2]
+
+                sqlUtil.insert_stock_select(batch, code, name, '5', remark)
+
+
+
+
+    def rule_limitUp(self, rows_all, batch):
+
+        # now = int(time.time())
+        # timeStruct = time.localtime(now)
+        # batch = time.strftime("%Y%m%d", timeStruct)
+
+        sqlUtil = SqlUtil()
+
+
+        rows_all_count = len(rows_all)
+
+        if rows_all_count > 2:
+
+            close = float(rows_all[rows_all_count - 1][3])
+
+            close_pre = float(rows_all[rows_all_count - 2][3])
+
+            upRate = 0
+
+            if close_pre > 0:
+                upRate = (close - close_pre) / close_pre;
+
+            if upRate >= 0.095:
+
+                remark = '今天涨停'
+                code = rows_all[rows_all_count - 1][1]
+                name = rows_all[rows_all_count - 1][2]
+
+                sqlUtil.insert_stock_select(batch, code, name, '6', remark)
+                print(remark)
+                print(code)
+                print(name)
+
+
+
+
     def rule_3DayUp(self, rows_all, batch):
         # now = int(time.time())
         # timeStruct = time.localtime(now)
@@ -218,6 +469,7 @@ class RuleUtil(object):
             high = float(rows_all[rows_all_count - 1][4])
             low = float(rows_all[rows_all_count - 1][5])
             open = float(rows_all[rows_all_count - 1][6])
+            turn_over_rate = float(rows_all[rows_all_count - 1][10])
 
 
             if open > 0:
@@ -228,7 +480,7 @@ class RuleUtil(object):
 
                 if (close == high) and (low == open):
 
-                    if upRate >= 0.05:
+                    if upRate >= 0.05 and  turn_over_rate > 5:
                         remark = '当天大阳线，且涨幅超过5%'
                         code = rows_all[rows_all_count - 1][1]
                         name = rows_all[rows_all_count - 1][2]
@@ -242,205 +494,17 @@ class RuleUtil(object):
 
 
 
-    def rule_limitUp(self, rows_all, batch):
 
-        # now = int(time.time())
-        # timeStruct = time.localtime(now)
-        # batch = time.strftime("%Y%m%d", timeStruct)
 
-        sqlUtil = SqlUtil()
 
 
-        rows_all_count = len(rows_all)
 
-        if rows_all_count > 2:
 
-            close = float(rows_all[rows_all_count - 1][3])
 
-            close_pre = float(rows_all[rows_all_count - 2][3])
 
-            upRate = 0
 
-            if close_pre > 0:
-                upRate = (close - close_pre) / close_pre;
 
-            if upRate >= 0.095:
 
-                remark = '今天涨停'
-                code = rows_all[rows_all_count - 1][1]
-                name = rows_all[rows_all_count - 1][2]
-
-                sqlUtil.insert_stock_select(batch, code, name, '101', remark)
-                print(remark)
-                print(code)
-                print(name)
-
-
-
-    def rule_50PercentUp(self, rows_all, batch):
-
-        # now = int(time.time())
-        # timeStruct = time.localtime(now)
-        # batch = time.strftime("%Y%m%d", timeStruct)
-
-        sqlUtil = SqlUtil()
-
-        rows_all_count = len(rows_all)
-
-        if rows_all_count > 30:
-
-            close_end = float(rows_all[rows_all_count - 1][3])
-
-            close_begin = float(rows_all[rows_all_count - 30][3])
-
-            upRate = 0
-
-            if close_begin > 0:
-                upRate = (close_end - close_begin) / close_begin;
-
-            if upRate >= 0.5:
-                remark = '30天累计涨幅超过50%'
-                code = rows_all[rows_all_count - 1][1]
-                name = rows_all[rows_all_count - 1][2]
-
-                sqlUtil.insert_stock_select(batch, code, name, '102', remark)
-                print(remark)
-                print(code)
-                print(name)
-
-    def rule_20PercentUp(self, rows_all, batch):
-
-        # now = int(time.time())
-        # timeStruct = time.localtime(now)
-        # batch = time.strftime("%Y%m%d", timeStruct)
-
-        sqlUtil = SqlUtil()
-
-        rows_all_count = len(rows_all)
-
-        if rows_all_count > 5:
-
-            close_end = float(rows_all[rows_all_count - 1][3])
-
-            close_begin = float(rows_all[rows_all_count - 5][3])
-
-            upRate = 0
-
-            if close_begin > 0:
-                upRate = (close_end - close_begin) / close_begin;
-
-            if upRate >= 0.2:
-                remark = '1周累计涨幅超过20%'
-                code = rows_all[rows_all_count - 1][1]
-                name = rows_all[rows_all_count - 1][2]
-
-                sqlUtil.insert_stock_select(batch, code, name, '103', remark)
-                print(remark)
-                print(code)
-                print(name)
-
-
-
-    def rule_bigDown(self, rows_all, batch):
-
-        now = int(time.time())
-        timeStruct = time.localtime(now)
-        batch = time.strftime("%Y%m%d", timeStruct)
-
-        sqlUtil = SqlUtil()
-        rule_day_count = 10
-        rows_all_count = len(rows_all)
-        rows_target = rows_all[rows_all_count - rule_day_count: rows_all_count]
-        rows_target_count = len(rows_target)
-
-        index = 0
-        for row in rows_target:
-            print(row)
-            print(index)
-            index = index + 1
-
-
-        if rows_target_count > 9:
-
-            closes = []
-
-            for row in rows_all:
-                closes.append(float(row[3]))
-
-            close_max = max(closes)
-            close_min = min(closes)
-
-            print('close_max = ' + str(close_max))
-            print('close_min = ' + str(close_min))
-
-            close_targets = []
-
-            for row in rows_target:
-                close_targets.append(float(row[3]))
-
-            close_target_max = max(close_targets)
-            close_target_min = min(close_targets)
-
-            print('close_target_max = ' + str(close_target_max))
-            print('close_target_min = ' + str(close_target_min))
-
-
-            rateDown = 0
-
-            if close_max > 0:
-                rateDown = (close_max - close_min) / close_max
-
-            print('rateDown = ' + str(rateDown))
-
-            rateUp_target = 0
-            if rateDown > 0.5:
-
-
-                if close_target_min > 0:
-
-                    rateUp_target = (close_target_max - close_target_min) / close_target_min
-
-                print('rateUp_target = ' + str(rateUp_target))
-
-
-                if rateUp_target < 0.2:
-
-                    close = float(rows_all[rows_all_count - 1][3])
-                    high = float(rows_all[rows_all_count - 1][4])
-                    low = float(rows_all[rows_all_count - 1][5])
-                    open = float(rows_all[rows_all_count - 1][6])
-
-                    turn_over_rate = float(rows_all[rows_all_count - 1][10])
-
-                    rateUp_today = 0
-
-                    if open > 0:
-                        rateUp_today = (close - open) / open;
-
-                    print('rateUp_today = ' + str(rateUp_today))
-
-                    if close > open:
-
-
-                        if rateUp_today >= 0.05:
-                            remark = '累计跌幅超过50%，最近9天涨幅小于20%，今天涨幅超过5%'
-                            code = rows_all[rows_all_count - 1][1]
-                            name = rows_all[rows_all_count - 1][2]
-
-                            sqlUtil.insert_stock_select(batch, code, name, '4', remark)
-                            print(remark)
-                            print(code)
-                            print(name)
-
-                        # if turn_over_rate >= 3:
-                        #     remark = '累计跌幅超过50%，最近9天涨幅小于20%，今天换手率超过3%'
-                        #     code = rows_all[rows_all_count - 1][1]
-                        #     name = rows_all[rows_all_count - 1][2]
-                        #
-                        #     sqlUtil.insert_stock_select(batch, code, name, '4', remark)
-                        #     print(remark)
-                        #     print(code)
-                        #     print(name)
 
 
 
@@ -556,8 +620,8 @@ if __name__ == "__main__":
     #
     # print('结束时间：%s' % datetime.now())
 
-    rows_all = sqlUtil.select_stock_history_by_code('002385')
-    ruleUtil.rule_bigDown(rows_all)
+    rows_all = sqlUtil.select_stock_history_by_code('000584')
+    ruleUtil.rule_bigDown(rows_all, '20200306')
 
 
 

@@ -1,10 +1,31 @@
 
 import requests;
-import time
+import time;
+import json;
 
 
 
 class NetEase(object):
+
+    def get_now_data(self, stock_codes):
+
+        url = 'http://api.money.126.net/data/feed/'+stock_codes+'money.api'
+        resp = requests.get(url)
+
+        stock_data_source = resp.content
+
+        start_len = len('_ntes_quote_callback(')
+        total_len = len(resp.content)
+
+
+        stock_data_source = stock_data_source[start_len : total_len - 2]
+
+
+
+        return stock_data_source
+
+
+
 
     def get_his_data(self, stock_code):
 
@@ -100,8 +121,10 @@ class NetEase(object):
 
 
 
+
 if __name__ == "__main__":
-    now = int(time.time())
-    timeStruct = time.localtime(now)
-    strTime = time.strftime("%Y%m%d", timeStruct)
-    print(strTime)
+
+    netEase = NetEase();
+    stock_codes = '0600519,1000858,';
+    stock_data = netEase.get_now_data(stock_codes)
+

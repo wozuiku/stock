@@ -13,11 +13,116 @@ from src.util.threadutil import JobThread
 from datetime import datetime
 import csv;
 import re;
-import threading
+import threading;
+import json;
+import time;
 
 
 
 class Job(object):
+
+    def get_now_data(self):
+
+        netEase = NetEase();
+        sqlUtil = SqlUtil()
+
+        print('获取实时数据，当前时间：%s' % datetime.now())
+
+        stock_rows = sqlUtil.select_stock()
+        stock_count = len(stock_rows)
+        stock_codes_str = ""
+        stock_index = 0
+
+        for row in stock_rows:
+            code = row[0]
+            #print(code)
+
+            prefix = code[0:1]
+            stock_index = stock_index + 1
+            div_left = stock_index % 100;
+            #print('stock_index = ' + str(stock_index) + ' div_left = ' + str(div_left))
+
+            if prefix == '0':
+                code = '1' + code;
+
+            if prefix == '3':
+                code = '1' + code;
+
+            if prefix == '6':
+                code = '0' + code;
+
+
+            stock_codes_str = stock_codes_str + code + ",";
+
+
+            if div_left == 0:
+
+                #print('stock_codes_str = ' + stock_codes_str)
+                stock_data_source = netEase.get_now_data(stock_codes_str)
+                print(stock_data_source)
+
+                stock_data_dict = json.loads(stock_data_source)
+
+                stock_now_items_str = ""
+
+                for i in stock_data_dict:
+
+                    try:
+                        timeStr = stock_data_dict[i]['time']
+                        code = stock_data_dict[i]['code']
+                        name = stock_data_dict[i]['name']
+                        # type = stock_data_dict[i]['type']
+                        price = stock_data_dict[i]['price']
+
+                        high = stock_data_dict[i]['high']
+                        low = stock_data_dict[i]['low']
+                        open = stock_data_dict[i]['open']
+                        pre_close = stock_data_dict[i]['yestclose']
+
+                        bargain_volume = stock_data_dict[i]['volume']
+                        bargain_amount = stock_data_dict[i]['turnover']
+
+                    except:
+                        print(stock_data_dict[i])
+
+
+                    # print('timeStr = ' + timeStr)
+                    # print('code = ' + code)
+                    # print('name = ' + name)
+                    # print('price = ' + str(price))
+                    # print('high = ' + str(high))
+                    # print('low = ' + str(low))
+                    # print('open = ' + str(open))
+                    # print('pre_close = ' + str(pre_close))
+                    #
+                    # print('bargain_volume = ' + str(bargain_volume))
+                    # print('bargain_amount = ' + str(bargain_amount))
+
+                    timeStruct = time.strptime(timeStr, "%Y/%m/%d %H:%M:%S")
+                    timeStr = time.strftime("%Y%m%d%H%M%S", timeStruct)
+                    stock_now_item = "(" + "\'" + timeStr + "\'" + "," + "\'" + code + "\'" + "," + "\'" + name + "\'" + "," + "\'" + str(
+                        price) + "\'" + "," + "\'" + str(high) + "\'" + "," + "\'" + str(low) + "\'" + "," + "\'" + str(
+                        open) + "\'" + "," + "\'" + str(pre_close) + "\'" + "," + "\'" + str(
+                        bargain_volume) + "\'" + "," + "\'" + str(bargain_amount) + "\'" + ")"
+
+                    stock_now_items_str = stock_now_items_str + stock_now_item + ","
+
+                stock_now_items_str = stock_now_items_str[0: len(stock_now_items_str) - 1]
+
+                print('*********')
+                print('*********')
+                print('*********')
+                print('*********')
+                print('*********')
+                print('*********')
+                print(stock_now_items_str)
+
+                sqlUtil.insert_stock_nows(stock_now_items_str)
+
+                stock_codes_str = ""
+
+
+
 
     def get_history_data(self):
         sqlUtil = SqlUtil()
@@ -73,6 +178,19 @@ class Job(object):
 
 
     def get_today_data(self, data_path, today):
+
+        sqlUtil = SqlUtil()
+        netEase = NetEase()
+        rows = sqlUtil.select_stock()
+
+        print('下载当天csv数据文件, 当前时间：%s' % datetime.now())
+
+        for row in rows:
+            code = row[0];
+            netEase.get_today_data(code, data_path, today)
+
+
+    def get_today_data_thread(self, data_path, today):
 
 
         # 创建新线程
@@ -262,54 +380,60 @@ class Job(object):
                         if stock_code == his_stock_code:
                             stock_his_rows.append(his_row)
 
-                    # print('stock_code = ' + stock_code)
-                    # print('stock_his_rows_count = ' + str(len(stock_his_rows)))
-                    # print(stock_his_rows)
 
-                    print('规则101：今天涨停，当前时间：%s' % datetime.now())
-                    ruleUtil.rule_limitUp(stock_his_rows, batch)
 
-                    print('规则102：30天累计涨幅超过百分之五十，当前时间：%s' % datetime.now())
-                    ruleUtil.rule_50PercentUp(stock_his_rows, batch)
-
-                    print('规则103：1周累计涨幅超过百分之二十，当前时间：%s' % datetime.now())
-                    ruleUtil.rule_20PercentUp(stock_his_rows, batch)
-
-                    print('规则1：连续3天放量增长，当前时间：%s' % datetime.now())
-                    ruleUtil.rule_3DayUp(stock_his_rows, batch)
-
-                    print('规则2：1吃9，当前时间：%s' % datetime.now())
-                    ruleUtil.rule_1Win9(stock_his_rows, batch)
-
-                    print('规则3：大阳线，当前时间：%s' % datetime.now())
-                    ruleUtil.rule_dayangLine(stock_his_rows, batch)
-
-                    print('规则4：超跌品种，当前时间：%s' % datetime.now())
+                    print('规则1：超跌品种，当前时间：%s' % datetime.now())
                     ruleUtil.rule_bigDown(stock_his_rows, batch)
 
-                    print('规则5：最近9天涨幅不超过百分之20，当前时间：%s' % datetime.now())
-                    ruleUtil.rule_littleUp(stock_his_rows, batch)
+                    print('规则2：2天累计涨幅超过百分之10，当前时间：%s' % datetime.now())
+                    ruleUtil.rule_2Day10Up(stock_his_rows, batch)
+
+                    print('规则3：3天累计涨幅超过百分之15，当前时间：%s' % datetime.now())
+                    ruleUtil.rule_3Day15Up(stock_his_rows, batch)
+
+                    print('规则4：5天累计涨幅超过百分之30，当前时间：%s' % datetime.now())
+                    ruleUtil.rule_5Day30Up(stock_his_rows, batch)
+
+
+
+
 
                 stock_codes_str = "("
                 stock_codes_array = []
 
-        emailUtil.send_email(batch)
+
 
 
 if __name__ == "__main__":
 
     job = Job()
 
-    data_path = '/Users/xianxiaoge/PycharmProjects/stock/data/today/'
-
     print('******开始任务******')
 
-    today = '20200207'
+    job_type = 2 # 获取实时数据
 
-    job.get_today_data(data_path, today)
 
-    job.import_csv_data(data_path)
-    #job.calculate_moving_average()
-    job.rule_match(today)
-    print('结束时间：%s' % datetime.now())
+    #获取实时数据
+    if job_type == 1:
+        job.get_now_data()
+
+    # 获取当天数据
+    if job_type == 2:
+
+        data_path = '/Users/xianxiaoge/PycharmProjects/stock/data/today/'
+        today = '20200415'
+        emailUtil = EmailUtil()
+
+        job.get_today_data(data_path, today)
+
+        #job.get_today_data_thread(data_path, today)
+
+        job.import_csv_data(data_path)
+        #job.calculate_moving_average()
+
+        job.rule_match(today)
+
+        emailUtil.send_email(today)
+
+        print('结束时间：%s' % datetime.now())
 

@@ -200,8 +200,8 @@ class HistoryData(object):
 if __name__ == "__main__":
 
     historyData = HistoryData()
-    date_start = '20200506'
-    date_end = '20200508'
+    date_start = '20200513'
+    date_end = '20200513'
     data_path = '/Users/xianxiaoge/PycharmProjects/stock/data/history/'
 
     historyData.download_csv_data(date_start, date_end)

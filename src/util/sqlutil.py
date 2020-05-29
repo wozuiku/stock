@@ -18,6 +18,32 @@ class SqlUtil(object):
 
 
 
+    def insert_stock_nows(self, now_values):
+
+        self.connect();
+        cursor = self.db.cursor();
+
+
+        insert_sql = "INSERT INTO stock_now(time, code, name, price, high, low,  open, pre_close, bargain_volume, bargain_amount)  VALUES " + now_values + ""
+
+        print('insert_stock_nows insert_sql = ' + insert_sql)
+
+        try:
+
+            cursor.execute(insert_sql);
+
+            self.db.commit();
+            #print("insert_stock_history sucess");
+        except Exception as e:
+            # 发生错误时回滚
+            self.db.rollback();
+            print("insert_stock_nows error：" + e);
+
+        # 关闭数据库连接
+        self.db.close()
+
+
+
 
     def insert_stock(self, code, name, industry, exchange, url,  status):
 
@@ -172,6 +198,31 @@ class SqlUtil(object):
 
 
 
+    def insert_stock_industry(self, code, name, industry, segment):
+
+        self.connect();
+        cursor = self.db.cursor();
+
+
+        insert_sql = "INSERT INTO stock_industry(code, name, industry, segment)  VALUES ( \'" + code + "\', \'" + name + "\',\'" + industry + "\',\'" + segment + "\')"
+
+
+        try:
+
+            cursor.execute(insert_sql);
+
+            self.db.commit();
+            print("insert_stock_industry sucess");
+        except Exception as e:
+            # 发生错误时回滚
+            self.db.rollback();
+            print("insert_stock_industry error：" + e);
+
+        # 关闭数据库连接
+        self.db.close()
+
+
+
     def check_stock_select(self, code, batch):
 
         self.connect();
@@ -247,6 +298,32 @@ class SqlUtil(object):
 
 
 
+    def select_stock_history_by_code_desc(self, code):
+
+        self.connect();
+
+        cursor = self.db.cursor();
+
+        select_sql = "SELECT date, code, name,  close, high, low, open, pre_close, up_down_price, up_down_range, turn_over_rate, bargain_volume, bargain_amount, total_market_value, flow_market_value, bargain_ticket_count FROM stock_history WHERE code = \'" + code + "\'  ORDER BY date desc";
+
+        print('select_sql:'+select_sql)
+
+        rows = [];
+
+        try:
+            cursor.execute(select_sql)
+            rows = cursor.fetchall()
+
+        except:
+            print("Error: unable to fetch data")
+
+        self.db.close()
+
+        return rows
+
+
+
+
     def select_stock_history_by_codes(self, codes):
 
         self.connect();
@@ -278,7 +355,7 @@ class SqlUtil(object):
 
         cursor = self.db.cursor();
 
-        select_sql = "SELECT s.industry, s.code, s.name, s.sector, s.url, ss.remark FROM stock s, stock_select ss WHERE s.code = ss.code AND ss.batch = \'" + batch + "\' AND s.sector <> \'科创板\' ORDER BY s.industry, s.code";
+        select_sql = "SELECT si.industry, si.segment, s.code, s.name, s.sector, sh.turn_over_rate, sh.close, ss.remark, ss.type FROM stock s, stock_industry si, stock_select ss, stock_history sh WHERE s.code = si.code AND s.code = ss.code AND s.code = sh.code AND replace(sh.date, '-', '') = ss.batch AND ss.batch = \'" + batch + "\' AND s.sector <> \'科创板\' AND s.name NOT LIKE '%ST%' ORDER BY ss.type, si.industry, si.segment";
 
         print('select_sql:'+select_sql)
 
